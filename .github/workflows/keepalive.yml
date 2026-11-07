@@ -1,0 +1,27 @@
+name: Keep backend active
+on:
+  schedule:
+    - cron: '17 6 * * 1,4'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Keep the schedule switched on
+        run: |
+          age=$(( ( $(date +%s) - $(git log -1 --format=%ct) ) / 86400 ))
+          echo "Newest commit is $age days old."
+          if [ "$age" -ge 30 ]; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit --allow-empty -m 'Keep scheduled workflows active (no site change)'
+            git push
+          fi
+      - name: Call the public ping function
+        run: |
+          curl --fail --silent --show-error --max-time 30 -X POST \
+            -H "apikey: sb_publishable_P5V3Q5zSTw0AmvE5MT9r5w_Wzq4s_UN" -H "Content-Type: application/json" -d '{}' \
+            "https://mkepigiktixxrowsteje.supabase.co/rest/v1/rpc/ping"
